@@ -1,4 +1,4 @@
-# vue_prj_03
+# 嗨!music
 
 ## Project setup
 ```
