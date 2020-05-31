@@ -108,4 +108,11 @@ export function getSong(id) {
 export function getSongC(id) {
   return axios.get(BASEURL + `/lyric?id=${id}`)
 }
-
+// 获取用户详情
+export function Userdetail(id) {
+  return axios.get(BASEURL + `/user/detail?uid=${id}`)
+}
+// 获取用户歌单
+export function User(id) {
+  return axios.get(BASEURL + `/user/playlist?uid=${id}`)
+}

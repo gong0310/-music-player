@@ -5,7 +5,9 @@ import store from './store'
 import './plugins/element';
 import 'element-ui/lib/theme-chalk/index.css';
 import './assets/css/global.css'
-
+import VueClipboard from 'vue-clipboard2'
+VueClipboard.config.autoSetContainer = true
+Vue.use(VueClipboard)
 Vue.config.productionTip = false
 // 全局过滤器
 Vue.filter('playTimeFormat', function (val) {

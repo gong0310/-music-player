@@ -7,12 +7,19 @@ import {
     TabPane,
     Message,
     MessageBox,
+    Notification,
     Container,
     Header,
     Aside,
     Main,
     Footer,
-    Loading
+    Loading,
+    Drawer,
+    Card ,
+    input,
+    dialog,
+    button,
+    popover
 } from 'element-ui'
 Vue.use(Carousel)
 Vue.use(CarouselItem)
@@ -25,9 +32,18 @@ Vue.use(Aside)
 Vue.use(Main)
 Vue.use(Footer)
 Vue.use(Loading)
+Vue.use(Drawer)
+Vue.use(Card)
+Vue.use(input)
+Vue.use(dialog)
+Vue.use(button)
+Vue.use(popover)
+
+    
 
 
 Vue.prototype.$message = Message
+Vue.prototype.$notify = Notification
 Vue.prototype.$confirm = MessageBox.confirm
 Vue.prototype.openLoading = function() {
     const loading = this.$loading({           // 声明一个loading对象

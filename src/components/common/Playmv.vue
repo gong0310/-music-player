@@ -2,37 +2,36 @@
   <div class="mv-container">
     <div class="mv-wrap">
       <div class="mv-info">
-          <h2 class="title">{{ mvInfo.name }}</h2>
-          <span class="date">发布：{{ mvInfo.publishTime }}</span>
-          <span class="number">播放：{{ mvInfo.playCount }} 次</span>
-        </div>
+        <h2 class="title">{{ mvInfo.name }}</h2>
+        <span class="date">发布：{{ mvInfo.publishTime }}</span>
+        <span class="number">播放：{{ mvInfo.playCount }} 次</span>
+      </div>
       <!-- mv -->
       <div class="video-wrap">
-        <video controls :src="url" autoplay></video>
+        <VideoPlayer :url="url" ref="video" />
       </div>
       <!-- mv信息 -->
       <div class="info-wrap">
         <div class="singer-info">
           <div class="avatar-wrap">
-            <img :src="mvInfo.cover" alt="">
+            <img :src="mvInfo.cover" alt />
           </div>
           <span class="name">{{ mvInfo.artistName }}</span>
         </div>
-        <p class="desc">
-            {{ mvInfo.desc }}
-          </p>
+        <p class="desc">{{ mvInfo.desc }}</p>
       </div>
       <!-- 精彩评论 -->
       <div class="comment-wrap" v-if="hotComments !== undefined && hotComments.length !== 0">
         <p class="title">
-          精彩评论<span class="number">({{ hotComments.length }})</span>
+          精彩评论
+          <span class="number">({{ hotComments.length }})</span>
         </p>
         <div class="comments-wrap">
           <!-- 评论 -->
           <div class="item" v-for="(item, index) in hotComments" :key="index">
             <div class="icon-wrap">
               <!-- 头像 -->
-              <img :src="item.user.avatarUrl+'?param=50y50'" alt="" />
+              <img :src="item.user.avatarUrl+'?param=50y50'" alt />
             </div>
             <div class="content-wrap">
               <div class="content">
@@ -52,19 +51,22 @@
       <!-- 最新评论 -->
       <div class="comment-wrap">
         <p class="title">
-          最新评论<span class="number">({{ total }})</span>
+          最新评论
+          <span class="number">({{ total }})</span>
         </p>
         <div class="comments-wrap">
           <!-- 评论 -->
           <div class="item" v-for="(item, index) in comments" :key="index">
             <div class="icon-wrap">
               <!-- 头像 -->
-              <img :src="item.user.avatarUrl+'?param=50y50'" alt="" />            
+              <img :src="item.user.avatarUrl+'?param=50y50'" alt />
             </div>
             <div class="content-wrap">
               <div class="content">
                 <span class="name">{{ item.user.nickname }}</span>
                 <span class="comment">：{{ item.content }}</span>
+                <Icon :size="12" type="good" />
+                {{ item.likedCount }}
               </div>
               <!-- 回复 -->
               <div class="re-content" v-if="item.beReplied.length !== 0">
@@ -77,8 +79,14 @@
         </div>
       </div>
       <!-- 分页器 -->
-      <el-pagination @current-change="handleCurrentChange" background layout="prev, pager, next" :total="total" :current-page="pageNum" :page-size="pageSize">
-      </el-pagination>
+      <el-pagination
+        @current-change="handleCurrentChange"
+        background
+        layout="prev, pager, next"
+        :total="total"
+        :current-page="pageNum"
+        :page-size="pageSize"
+      ></el-pagination>
     </div>
     <div class="mv-recommend">
       <h3 class="title">相关推荐</h3>
@@ -86,7 +94,7 @@
         <div class="items">
           <div class="item" v-for="(item, index) in simiMvs" :key="index" @click="playMv(item.id)">
             <div class="img-wrap">
-              <img :src="item.cover+'?param=250y150'" alt="" />
+              <img :src="item.cover+'?param=250y150'" alt />
               <span class="iconfont icon-play"></span>
               <div class="num-wrap">
                 <div class="iconfont icon-play"></div>
@@ -107,13 +115,13 @@
 </template>
 
 <script>
-import { getMvUrl, getMvDetail, getMvComment, getSimiMvUrl } from '@/api/api'
-
+import { getMvUrl, getMvDetail, getMvComment, getSimiMvUrl } from "@/api/api";
+import VideoPlayer from "./VideoPlayer";
 export default {
-  name: 'mv',
+  name: "mv",
   data() {
     return {
-      id: '',
+      id: "",
       total: 20,
       pageNum: 1,
       pageSize: 10,
@@ -121,39 +129,42 @@ export default {
       simiMvs: [],
       hotComments: [],
       comments: []
-    }
+    };
+  },
+  components: {
+    VideoPlayer
   },
   created() {
-    this.id = this.$route.query.id
-    this._getMvUrl()
-    this._getMvDetail()
-    this._getSimiMvUrl()
-    this._getMvComment()
+    this.id = this.$route.query.id;
+    this._getMvUrl();
+    this._getMvDetail();
+    this._getSimiMvUrl();
+    this._getMvComment();
   },
- computed: {
-      url(){
-        return this.$store.state.mvUrl
-      }
-    },
+  computed: {
+    url() {
+      return this.$store.state.mvUrl;
+    }
+  },
   methods: {
     handleCurrentChange(val) {
-      this.pageNum = val
-      this._getMvComment()
+      this.pageNum = val;
+      this._getMvComment();
     },
     // 获取MV播放地址
     async _getMvUrl() {
       const { data: resp } = await getMvUrl({
         id: this.id,
         r: 1080
-      })
-      this.$store.commit('mvUrl',resp.data.url)
+      });
+      this.$store.commit("mvUrl", resp.data.url);
     },
 
     // 获取MV详情
     async _getMvDetail() {
-      const { data: resp } = await getMvDetail(this.id)
-      console.log(resp)
-      this.mvInfo = resp.data
+      const { data: resp } = await getMvDetail(this.id);
+      console.log(resp);
+      this.mvInfo = resp.data;
     },
 
     // 获取MV评论
@@ -163,29 +174,51 @@ export default {
         id: this.id,
         limit: this.pageSize,
         offset: (this.pageNum - 1) * this.pageSize
-      })
-      this.comments = resp.comments
-      this.hotComments = resp.hotComments
-      this.total = resp.total
-      rLoading.close()
+      });
+      this.comments = resp.comments;
+      this.hotComments = resp.hotComments;
+      this.total = resp.total;
+      rLoading.close();
     },
 
     // 获取相关MV
     async _getSimiMvUrl() {
-      const { data: resp } = await getSimiMvUrl(this.id)
-      this.simiMvs = resp.mvs
+      const { data: resp } = await getSimiMvUrl(this.id);
+      this.simiMvs = resp.mvs;
     },
 
     playMv(id) {
-      this.pageNum = 1
-      this.id = id
-      this._getMvUrl()
-      this._getMvDetail()
-      this._getSimiMvUrl()
-      this._getMvComment()
+      this.pageNum = 1;
+      this.id = id;
+      this._getMvUrl();
+      this._getMvDetail();
+      this._getSimiMvUrl();
+      this._getMvComment();
+      const player = this.$refs.video.player;
+      player.emit("resourceReady", genResource(this.mvInfo.brs, mvInfo));
+    },
+    genResource(brs, mvPlayInfo) {
+      const { url: mvPlayInfoUrl, r: mvPlayInfoBr } = mvPlayInfo;
+      const keyNameMap = {
+        "240": "标清",
+        "480": "高清",
+        "720": "超清",
+        "1080": "1080P"
+      };
+
+      return Object.keys(brs).map(key => {
+        // 优先使用mvPlayInfo里的数据
+        const findPreferUrl = key === mvPlayInfoBr;
+        const name = keyNameMap[key];
+        const url = findPreferUrl ? mvPlayInfoUrl : brs[key];
+        return {
+          url,
+          name
+        };
+      });
     }
   }
-}
+};
 </script>
 
 <style lang="less" scoped>
@@ -410,7 +443,7 @@ export default {
   font-size: 14px;
   color: #c5c5c5;
 }
-.height{
+.height {
   height: 50px;
 }
 </style>

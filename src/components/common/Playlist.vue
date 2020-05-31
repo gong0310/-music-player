@@ -182,7 +182,7 @@ export default {
     },
     //播放全部
     allSong(){
-      this.playlist.trackIds.map(item=>{
+      this.playlist.trackIds.forEach(item=>{
         this.$store.dispatch('getMusUrl',item.id)
       })
     },

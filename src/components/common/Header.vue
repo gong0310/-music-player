@@ -3,6 +3,7 @@
     <div class="left-box">
       <div class="icon-wrapper">
         <span class="iconfont icon-home" @click="toHomeClick()"></span>
+        <span class="iconfont icon-min-screen" @click="getFullCreeen()"></span>
         <span class="iconfont icon-full-screen" @click="getFullCreeen()"></span>
       </div>
       <div class="history-wrapper">
@@ -16,7 +17,7 @@
           type="text"
           autocomplete="off"
           placeholder="搜索"
-          v-model="inputVal"
+          v-model.trim="inputVal"
           @keyup.enter="toSearch"
           class="el-input__inner"
         />
@@ -24,15 +25,27 @@
           <i class="el-input__icon el-icon-search"></i>
         </span>
       </div>
-      <ul>
-        <li v-for="item in suggestSongs" :key="item.id" @click="goSearch(item.name)">{{item.name}}</li>
-      </ul>
+      <!-- 搜索自动推荐 -->
+      <div class="box-card" v-show="recommend">
+        <h3>搜索推荐</h3>
+        <el-card>
+          <div
+            v-for="item in suggestSongs"
+            :key="item.id"
+            @click="goSearch(item.name)"
+          >{{item.name}}</div>
+        </el-card>
+        <HistoryList/>
+        <Theme />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import {suggest} from '@/api/api'
+import { suggest } from "@/api/api";
+import HistoryList from "./SearchHitory";
+import Theme from "@/components/theme"
 export default {
   name: "top",
   data() {
@@ -41,16 +54,28 @@ export default {
       inputVal: "",
       n: 0,
       btnStatus: 0,
-      fullscreen:false,
-      suggestSongs:[]
+      fullscreen: false,
+      recommend: false,
+      suggestSongs: []
     };
   },
+  components: {
+    HistoryList,
+    Theme
+  },
   watch: {
-    async inputVal(val){
-      const{data:res}=await suggest(val)
-      console.log(res.result.songs)
-      this.suggestSongs=res.result.songs
+    async inputVal(val) {
+      if (val) {
+        this.recommend = true;
+        const { data: res } = await suggest(val);
+        this.suggestSongs = res.result.songs;
+      } else {
+        this.recommend = false;
+      }
     }
+  },
+  mounted() {
+    this.$store.commit("init");
   },
   methods: {
     // 直接搜索
@@ -59,6 +84,9 @@ export default {
         this.$router.push({
           path: "/searchResult",
           query: { inputVal: this.inputVal }
+        });
+        this.$store.commit("searchHistoryList", {
+          name: this.inputVal
         });
       } else {
         this.$message("请输入搜索项");
@@ -72,12 +100,15 @@ export default {
       this.$router.push(`/discovery`);
     },
     //搜索推荐
-    goSearch(val){
+    goSearch(val) {
       this.$router.push({
-          path: "/searchResult",
-          query: { inputVal: val }
+        path: "/searchResult",
+        query: { inputVal: val }
+      });
+      this.suggestSongs = [];
+      this.$store.commit("searchHistoryList", {
+          name:val
         });
-        this.suggestSongs=[]
     },
     go() {
       this.$router.go(1);
@@ -121,7 +152,7 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 0 20px;
-  background-color: #F9F9F9;
+  background-color: #f9f9f9;
   width: 100%;
 }
 
@@ -191,16 +222,19 @@ export default {
 .top-container .right-box {
   display: flex;
   align-items: center;
+  position: relative;
 }
-.top-container .right-box ul{
-  top: 50px;
+.top-container .right-box .box-card {
   font-size: 14px;
-  position: fixed;
+  position: absolute;
   width: 100%;
   top: 45px;
   cursor: pointer;
 }
-.top-container .right-box ul li{
+h3{
+    text-align:left;
+  }
+.top-container .right-box .box-card div {
   margin-top: 8px;
   text-align: left;
   border-bottom: 1px solid rgb(131, 153, 194);

@@ -5,6 +5,9 @@
     <div class="nav">
       <ul>
         <li>
+          <User />
+        </li>
+        <li>
           <router-link to="/discovery">
             <span class="iconfont icon-find-music"></span>
             发现音乐
@@ -36,18 +39,40 @@
       <router-view></router-view>
     </div>
     <!-- 播放列表 -->
-    <div class="list" v-show="list">
-      <ul>
-        <li class="clearList" @click="clearList">清空列表</li>
-        <li v-for="(item,index) in lists" :key="index" @click="play(index)">
-          <span>{{item.name}}</span>
-          <span>{{item.arName}}</span>
-          <span></span>
-        </li>
-      </ul>
-    </div>
+    <el-drawer title="播放列表" :visible.sync="list" :with-header="false">
+      <!-- 正在播放 -->
+      <div class="list">
+        <el-tabs v-model="activeName" type="card">
+          <el-tab-pane label="正在播放" name="first">
+            <ul>
+              <h3>正在播放</h3>
+              <h5 class="clearList" @click="clearList">清空列表</h5>
+              <li v-for="(item,index) in lists" :key="index">
+                <span @click="play(index)">{{item.name}}</span>
+                <span>{{item.arName}}</span>
+                <span class="el-icon-circle-close" @click="clear(index)"></span>
+              </li>
+            </ul>
+          </el-tab-pane>
+          <el-tab-pane label="播放历史" name="second">
+            <!-- 播放历史 -->
+            <ul>
+              <h3>播放历史</h3>
+              <h5 class="clearList" @click="clearHistoryList">清空列表</h5>
+              <li v-for="(item,index) in historyList" :key="index">
+                <span @click="playHistory({item,index})">{{item.name}}</span>
+                <span>{{item.arName}}</span>
+                <span class="el-icon-circle-close" @click="clearHistoryItem(index)"></span>
+              </li>
+            </ul>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </el-drawer>
+
     <!-- 控制器 没有合适好看图标，暂时先用图片-->
     <div class="playerContel">
+      <span class="name">{{name}}</span>
       <span @click="setSong" class="img">
         <img :src="img" alt />
       </span>
@@ -67,6 +92,9 @@
       <span @click="selectLoop" class="loop">
         <img v-if="isLoop" src="../assets/image/one.png" alt />
         <img v-else src="../assets/image/sun.png" alt />
+      </span>
+      <span v-clipboard:copy="copyUrl" v-clipboard:success="onCopy" v-clipboard:error="onError">
+        <img src="../assets/image/share.png" alt />
       </span>
     </div>
     <div class="player">
@@ -110,6 +138,7 @@ import Header from "./common/Header";
 import { getSongC } from "@/api/api";
 import Lyric from "lyric-parser";
 import Scroll from "./common/Scorll";
+import User from "./common/User";
 // const Scroll = () => import("./common/Scorll");
 export default {
   data() {
@@ -128,12 +157,19 @@ export default {
       loop: true,
       isLoop: false,
       //动画滚动
-      isgoplay: false
+      isgoplay: false,
+      activeName: "first"
     };
   },
   computed: {
     musicUrl() {
       return this.$store.state.playlist[this.$store.getters.index].url;
+    },
+    // 分享
+    copyUrl() {
+      return `https://music.163.com/#/song?id=${
+        this.$store.state.playlist[this.$store.getters.index].id
+      }`;
     },
     id() {
       return this.$store.state.playlist[this.$store.getters.index].id;
@@ -141,13 +177,20 @@ export default {
     lists() {
       return this.$store.state.playlist;
     },
+    name() {
+      return this.$store.state.playlist[this.$store.getters.index].name;
+    },
+    historyList() {
+      return this.$store.getters.historyList;
+    },
     img() {
       return this.$store.state.playlist[this.$store.getters.index].img;
     }
   },
   components: {
     Header,
-    Scroll
+    Scroll,
+    User
   },
   watch: {
     paused(val) {
@@ -167,6 +210,16 @@ export default {
     }
   },
   methods: {
+    //分享
+    onCopy() {
+      this.$notify({
+        message: `链接已复制到粘贴板，快去分享吧！---${this.name}`,
+        type: "success"
+      });
+    },
+    onError() {
+      this.$notify.error("分享失败");
+    },
     //获取歌词
     getSongs() {
       getSongC(this.id).then(res => {
@@ -199,9 +252,19 @@ export default {
         this.isgoplay = false;
       }
     },
-    //清空列表
+    //清空播放列表
     clearList() {
       this.$store.commit("clearList");
+    },
+    clearHistoryList() {
+      this.$store.commit("clearHistoryList");
+    },
+    //删除指定歌曲
+    clear(index) {
+      this.$store.commit("clear", index);
+    },
+    clearHistoryItem(val) {
+      this.$store.commit("clearHistoryItem", val);
     },
     //展示歌词
     setSong() {
@@ -224,6 +287,12 @@ export default {
       this.$store.commit("play", index);
       this.getSongs();
     },
+    // 播放历史列表中歌曲
+    playHistory(index) {
+      this.$store.commit("playHistory", index);
+      this.getSongs();
+    },
+
     // 上一首
     min() {
       this.$store.commit("min");
@@ -312,6 +381,10 @@ export default {
     display: inline-block;
     flex: 1;
   }
+  .name{
+    font-size: 18px;
+    transform: translate(-10%,-50%);
+  }
   .play {
     width: 97px;
     height: 60px;
@@ -330,18 +403,17 @@ export default {
   position: fixed;
   cursor: pointer;
   right: 30px;
-  top: 102px;
-  width: 300px;
-  height: 700px;
+  top: 32px;
+  width: 26vw;
+  height: auto;
   background-color: white;
-  box-shadow: -3px -3px #ddd;
   overflow: hidden;
   text-align: left;
   color: #000;
   ul {
-    width: 317px;
-    height: 700px;
-    overflow-y: scroll;
+    width: 100%;
+    height: auto;
+    // overflow-y: scroll;
     li {
       border-bottom: 1px solid rgb(131, 153, 194);
       padding-top: 15px;
@@ -354,6 +426,7 @@ export default {
   .clearList {
     position: absolute;
     right: 20px;
+    display: inline-block;
   }
 }
 .middle-r {

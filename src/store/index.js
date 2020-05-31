@@ -6,34 +6,45 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     mvUrl: '',
-    //播放列表,默认添加一首
+    //正在播放列表
     playlist: [
       {
-        name: "",
-        id: 1440079854,
-        img: "https://p2.music.126.net/SCSx49IzYiQ0hSTqzw5nXg==/109951163097291709.jpg",
-        url: "http://m8.music.126.net/20200423004233/5fd6e52e69ae8acecb102ffe8fa45c8e/ymusic/c87e/3e14/2f2b/b62daaeec9432820d3c61bec0f57b8f0.mp3",
+        name: "默认",
+        id: '123456',
+        img: "",
+        url: "",
         arName: "",
-        dt: 280896
+        dt: ''
       }
     ],
+    // 播放历史列表
+    historyList: [],
+    // 搜索历史列表
+    searchHistoryList: [],
     // 播放歌曲下标
     index: 0,
     //播放状态
     paused: true
   },
   getters: {
-    index: (state) => {
-      return state.index
-    },
-    paused: (state) => {
-      return state.paused
-    }
+    // index: (state) => {
+    //   return state.index
+    // },
+    // paused: (state) => {
+    //   return state.paused
+    // },
+    // historyList: (state) => {
+    //   return state.historyList
+    // },
   },
   mutations: {
     musicList(state, payload) {
-      state.musicUrl = payload.url
-      state.playlist.push(payload)
+      // 判断列表中是否已经存在该歌曲
+      if (state.playlist.find(item => item.id == payload.id)) {
+        return
+      } else {
+        state.playlist.unshift(payload)
+      }
     },
     mvUrl(state, payload) {
       state.mvUrl = payload
@@ -49,23 +60,93 @@ export default new Vuex.Store({
     //下一首
     add(state) {
       if (state.index == state.playlist.length - 1) {
-        state.index = 1
+        state.index = 0
       } else {
         state.index++;
       }
     },
+    // 播放播放列表中歌曲
     play(state, payload) {
       state.index = payload
+    },
+    // 播放历史播放列表中歌曲并加入到当前播放
+    playHistory(state, payload) {
+      // 判断是已经否存在
+      if (state.playlist.find(item => item.id == payload.id)) {
+        let song = state.playlist.find(item => item.id == payload.id)
+        let index = state.playlist.findIndex(song)
+        state.index = index
+      } else {
+        state.playlist.unshift(state.historyList[payload.index])
+        state.index = 0
+      }
     },
     paused(state, payload) {
       state.paused = payload
     },
     clearList(state) {
-      //清空播放列表，保留初始默认一首
+      //清空播放列表
       state.playlist = state.playlist.splice(0, 1)
+    },
+    //删除指定播放歌曲
+    clear(state, payload) {
+      state.playlist.splice(payload, 1)
+    },
+    //删除指定历史播放歌曲
+    clearHistoryItem(state, payload) {
+      let history = JSON.parse(localStorage.getItem("play_history"));
+      history.splice(payload, 1)
+      localStorage.setItem("play_history", JSON.stringify(history));
+      state.historyList = JSON.parse(localStorage.getItem("play_history"));
+    },
+    clearHistoryList(state) {
+      //清空播放历史记录
+      localStorage.removeItem("play_history");
+      state.historyList = JSON.parse(localStorage.getItem("play_history"));
+    },
+    // 搜索历史
+    searchHistoryList(state, payload) {
+      let searchsongs = {
+        name: payload.name
+      }
+      let history = localStorage.getItem("search_history");
+      if (history) {
+        history = JSON.parse(history);
+        if (history.length >= 5) {
+          history.splice(4, history.length - 4);
+        }
+      } else {
+        history = [];
+      }
+      // 判断是否已经存在
+      if (history.find(item => item.name == payload.name)) {
+        return
+      } else {
+        history.push(searchsongs)
+        localStorage.setItem("search_history", JSON.stringify(history));
+        state.searchHistoryList = JSON.parse(localStorage.getItem("search_history"));
+      }
+    },
+    clearSearchList(state) {
+      //清空播放历史记录
+      localStorage.removeItem("search_history");
+      state.historyList = JSON.parse(localStorage.getItem("search_history"));
+    },
+     //删除指定搜索播放歌曲
+     clearSearchItem(state, payload) {
+      let history = JSON.parse(localStorage.getItem("search_history"));
+      history.splice(payload, 1)
+      localStorage.setItem("search_history", JSON.stringify(history));
+      state.historyList = JSON.parse(localStorage.getItem("search_history"));
+    },
+    // 初始化
+    init(state) {
+      state.searchHistoryList = JSON.parse(localStorage.getItem("search_history"));
+      state.historyList = JSON.parse(localStorage.getItem("play_history"));
     }
   },
   actions: {
+    //每播放一首歌
     async getMusUrl({ commit, state }, payload) {
       // 获取歌曲播放地址
       const { data: resp } = await getMusicUrl(payload)
@@ -82,8 +163,26 @@ export default new Vuex.Store({
         arName: resp1.songs[0].ar[0].name,
         dt: resp1.songs[0].dt
       }
+      //加入列表
       commit('musicList', songs)
-      state.index = state.playlist.length - 1
+      let history = localStorage.getItem("play_history");
+      if (history) {
+        history = JSON.parse(history);
+        if (history.length >= 9) {
+          history.splice(8, history.length - 8);
+        }
+      } else {
+        history = [];
+      }
+      // 判断是否已经存在该首歌
+      if (history.find(item => item.id == payload)) {
+        return
+      } else {
+        history.push(songs)
+        localStorage.setItem("play_history", JSON.stringify(history));
+        state.historyList = JSON.parse(localStorage.getItem("play_history"));
+      }
+      state.index = 0
     }
   },
   modules: {
