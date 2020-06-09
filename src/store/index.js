@@ -88,11 +88,9 @@ export default new Vuex.Store({
       //清空播放列表
       state.playlist = state.playlist.splice(0, 1)
     },
-    //删除指定播放歌曲
     clear(state, payload) {
       state.playlist.splice(payload, 1)
     },
-    //删除指定历史播放歌曲
     clearHistoryItem(state, payload) {
       let history = JSON.parse(localStorage.getItem("play_history"));
       history.splice(payload, 1)
@@ -100,7 +98,6 @@ export default new Vuex.Store({
       state.historyList = JSON.parse(localStorage.getItem("play_history"));
     },
     clearHistoryList(state) {
-      //清空播放历史记录
       localStorage.removeItem("play_history");
       state.historyList = JSON.parse(localStorage.getItem("play_history"));
     },
@@ -132,7 +129,6 @@ export default new Vuex.Store({
       localStorage.removeItem("search_history");
       state.historyList = JSON.parse(localStorage.getItem("search_history"));
     },
-     //删除指定搜索播放歌曲
      clearSearchItem(state, payload) {
       let history = JSON.parse(localStorage.getItem("search_history"));
       history.splice(payload, 1)

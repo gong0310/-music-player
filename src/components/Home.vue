@@ -40,7 +40,6 @@
     </div>
     <!-- 播放列表 -->
     <el-drawer title="播放列表" :visible.sync="list" :with-header="false">
-      <!-- 正在播放 -->
       <div class="list">
         <el-tabs v-model="activeName" type="card">
           <el-tab-pane label="正在播放" name="first">
@@ -259,7 +258,6 @@ export default {
     clearHistoryList() {
       this.$store.commit("clearHistoryList");
     },
-    //删除指定歌曲
     clear(index) {
       this.$store.commit("clear", index);
     },
@@ -317,7 +315,6 @@ export default {
     listShow() {
       this.list = !this.list;
     },
-    //切换模式
     selectLoop() {
       if (this.isLoop) {
         this.isLoop = false;
